@@ -31,9 +31,8 @@ if ($Server -notmatch "^.+:\d+$") {
 
 try {
     Write-Host "Connecting to server at $Server..."
-    Start-Process -NoNewWindow -FilePath ".\encrypted-chat.exe" -ArgumentList "client", "--server", $Server, "--key", $Key
+    Start-Process -NoNewWindow -FilePath ".\chago.exe" -ArgumentList "client", "--server", $Server, "--key", $Key
 } catch {
     Write-Error "Failed to start client: $_"
     exit 1
 }
-

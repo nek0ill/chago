@@ -37,4 +37,3 @@ try {
     Write-Error "Failed to start monitoring stack: $_"
     exit 1
 }
-

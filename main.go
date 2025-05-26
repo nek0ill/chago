@@ -22,7 +22,7 @@ func main() {
 	monitoring.InitMetrics()
 
 	rootCmd := &cobra.Command{
-		Use:   "encrypted-chat",
+		Use:   "chago",
 		Short: "End-to-end encrypted chat application",
 	}
 

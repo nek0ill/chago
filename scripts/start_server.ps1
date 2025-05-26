@@ -47,7 +47,7 @@ try {
 # Start server process
 try {
     Write-Host "Starting server on port $Port..."
-    Start-Process -NoNewWindow -FilePath ".\encrypted-chat.exe" -ArgumentList "server", "--port", $Port, "--key", $Key, "--metrics-port", 2112
+    Start-Process -NoNewWindow -FilePath ".\chago.exe" -ArgumentList "server", "--port", $Port, "--key", $Key, "--metrics-port", 2112
     
     # Verify metrics endpoint comes up
     $attempts = 0
@@ -66,4 +66,3 @@ try {
     Write-Error "Failed to start server: $_"
     exit 1
 }
-

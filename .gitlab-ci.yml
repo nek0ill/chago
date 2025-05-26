@@ -20,7 +20,7 @@ before_script:
 build:
   stage: build
   script:
-    - go build -o bin/encrypted-chat .
+    - go build -o bin/chago .
   artifacts:
     paths:
       - bin/

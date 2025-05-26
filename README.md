@@ -16,7 +16,7 @@ Secure end-to-end encrypted chat application with built-in monitoring using Prom
 2. Build and run:
    ```powershell
    # 1. Build application
-   go build -o encrypted-chat.exe
+   go build -o chago.exe
    
    # 2. Start server (PowerShell)
    .\scripts\start_server.ps1
@@ -37,20 +37,20 @@ For Linux/macOS, use the .sh scripts in the scripts/ directory.
 If seeing connection issues:
 ```powershell
 # Allow inbound connections
-New-NetFirewallRule -DisplayName "Encrypted Chat" -Direction Inbound -LocalPort 8080,2112 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "ChaGo" -Direction Inbound -LocalPort 8080,2112 -Protocol TCP -Action Allow
 
 # Verify rules
-Get-NetFirewallRule | Where-Object { $_.DisplayName -like "*Encrypted Chat*" }
+Get-NetFirewallRule | Where-Object { $_.DisplayName -like "*ChaGo*" }
 ```
 
 # 2. Start server (generate key if needed)
-./encrypted-chat server --port 8080 --key $(openssl rand -hex 32)
+./chago server --port 8080 --key $(openssl rand -hex 32)
 
 # 3. Start monitoring stack
 docker-compose -f monitoring/docker-compose.yml up -d
 
 # 4. Connect client
-./encrypted-chat client --server localhost:8080 --key YOUR_KEY
+./chago client --server localhost:8080 --key YOUR_KEY
 ```
 
 ## Features

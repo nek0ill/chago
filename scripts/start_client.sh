@@ -7,4 +7,4 @@ fi
 
 SERVER=${2:-"localhost:8080"}
 echo "Connecting to $SERVER"
-./encrypted-chat client --server $SERVER --key $1
+./chago client --server $SERVER --key $1
