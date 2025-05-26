@@ -1,4 +1,4 @@
-module github.com/yourusername/encrypted-chat
+module github.com/nek0ill/chago
 
 go 1.24.3
 

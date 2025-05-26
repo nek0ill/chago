@@ -8,11 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"flag"
 	"github.com/spf13/cobra"
-	"github.com/yourusername/encrypted-chat/internal/chat"
-	"github.com/yourusername/encrypted-chat/internal/crypto"
-	"github.com/yourusername/encrypted-chat/internal/monitoring"
+	"github.com/nek0ill/chago/internal/chat"
+	"github.com/nek0ill/chago/internal/monitoring"
 )
 
 var (
@@ -81,48 +79,38 @@ func runServer(cmd *cobra.Command, args []string) {
 
 func runClient(cmd *cobra.Command, args []string) {
 	var (
-		serverAddr string
-		key        string
+		serverAddr  string
+		key         string
 	)
 
-	cmd.Flags().StringVarP(&serverAddr, "server", "s", "localhost:8080", "Server address")
-	cmd.Flags().StringVarP(&key, "key", "k", "", "Encryption key (must match server key)")
-	cmd.ParseFlags(os.Args[2:])
-
-	if key == "" {
-		log.Fatal("Encryption key is required for client")
-	}
-
-	client, err := chat.NewClient(serverAddr)
-	if err != nil {
-		log.Fatalf("Failed to connect to %s: %v", serverAddr, err)
-	}
-
-	log.Printf("Connected to %s", serverAddr)
-
-	// Start message sender
-	go func() {
-		for {
-			var msg string
-			fmt.Print("> ")
-			if _, err := fmt.Scanln(&msg); err != nil {
-				log.Println("Error reading input:", err)
-				continue
+	clientCmd := &cobra.Command{
+		Use:   "connect",
+		Short: "Connect to a chat server",
+		Run: func(cmd *cobra.Command, args []string) {
+			client, err := chat.NewClient(serverAddr)
+			if err != nil {
+				log.Fatal("Failed to connect:", err)
 			}
 
-			if err := client.SendMessage(msg, []byte(key)); err != nil {
-				log.Println("Error sending message:", err)
-			}
-		}
-	}()
+			log.Printf("Connected to %s", serverAddr)
+			
+			// Start interactive session
+			for {
+				var msg string
+				log.Print("Enter message: ")
+				if _, err := fmt.Scanln(&msg); err != nil {
+					log.Println("Error reading input:", err)
+					continue
+				}
 
-	// Start message receiver
-	for {
-		msg, err := client.ReceiveMessage([]byte(key))
-		if err != nil {
-			log.Println("Disconnected from server:", err)
-			return
-		}
-		fmt.Printf("\n< %s\n> ", msg)
+				if err := client.SendMessage(msg, []byte(key)); err != nil {
+					log.Println("Error sending message:", err)
+				}
+			}
+		},
 	}
+
+	clientCmd.Flags().StringVarP(&serverAddr, "server", "s", "localhost:8080", "Server address")
+	clientCmd.Flags().StringVarP(&key, "key", "k", "", "Encryption key")
+	clientCmd.Execute()
 }

@@ -1,14 +1,14 @@
 package chat
 
 import (
+	"encoding/binary"
+	"errors"
+	"io"
+	"log"
 	"net"
 	"time"
-	"log"
-	"io"
-	"errors"
-	"encoding/binary"
-	"github.com/Nekoill/encrypted-chat/internal/crypto"
-	"github.com/Nekoill/encrypted-chat/internal/monitoring"
+	"github.com/nek0ill/chago/internal/crypto"
+	"github.com/nek0ill/chago/internal/monitoring"
 )
 
 type Client struct {
