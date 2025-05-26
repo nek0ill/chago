@@ -1,21 +1,26 @@
----
-
 image: golang:1.24.3
 
 stages:
-  - build
+  - setup
+  - build  
   - test
   - build-monitoring
   - deploy
 
 variables:
+  DOCKER_BUILDKIT: 1
   GOFLAGS: "-mod=vendor"
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_DRIVER: overlay2
-  
+
+# Dedicated setup stage for dependencies  
+setup:
+  stage: setup
+  script:
+    - apt-get update && apt-get install -y docker.io
+    - curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    - chmod +x /usr/local/bin/docker-compose
+
 before_script:
-  - go mod download
-  - apt install --no-cache docker-compose
+  - go mod download  
 
 build:
   stage: build
@@ -26,27 +31,26 @@ build:
       - bin/
 
 test:
-  stage: test
+  stage: test  
   script:
     - go test -v ./...
-    # Test metrics endpoint
     - bash ./scripts/test_metrics.sh
 
 build-monitoring:
-  stage: build-monitoring
+  stage: build-monitoring  
   script:
     - docker-compose -f monitoring/docker-compose.yml config
-    - docker-compose -f monitoring/docker-compose.yml build
-  artifacts:
+    - docker buildx build --build-arg BUILDKIT_INLINE_CACHE=1 -t $CI_REGISTRY_IMAGE .
+  cache:
+    key: monitoring-build
     paths:
       - monitoring/
 
-deploy:
+deploy:  
   stage: deploy
   script:
-    - echo "$DOCKER_REGISTRY_PASSWORD" | docker login --username "$DOCKER_REGISTRY_USER" --password-stdin
-    - docker-compose -f monitoring/docker-compose.yml push
-    - echo "Deploying monitoring stack..."
+    - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USER" --password-stdin
+    - docker push $CI_REGISTRY_IMAGE
     - kubectl apply -f monitoring/k8s/
   only:
     - main
