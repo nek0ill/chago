@@ -15,7 +15,7 @@ variables:
   
 before_script:
   - go mod download
-  - apk add --no-cache docker-compose
+  - apt add --no-cache docker-compose
 
 build:
   stage: build
