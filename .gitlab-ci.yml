@@ -1,0 +1,52 @@
+---
+
+image: golang:1.24.3
+
+stages:
+  - build
+  - test
+  - build-monitoring
+  - deploy
+
+variables:
+  GOFLAGS: "-mod=vendor"
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+  
+before_script:
+  - go mod download
+  - apk add --no-cache docker-compose
+
+build:
+  stage: build
+  script:
+    - go build -o bin/encrypted-chat .
+  artifacts:
+    paths:
+      - bin/
+
+test:
+  stage: test
+  script:
+    - go test -v ./...
+    # Test metrics endpoint
+    - bash ./scripts/test_metrics.sh
+
+build-monitoring:
+  stage: build-monitoring
+  script:
+    - docker-compose -f monitoring/docker-compose.yml config
+    - docker-compose -f monitoring/docker-compose.yml build
+  artifacts:
+    paths:
+      - monitoring/
+
+deploy:
+  stage: deploy
+  script:
+    - echo "$DOCKER_REGISTRY_PASSWORD" | docker login --username "$DOCKER_REGISTRY_USER" --password-stdin
+    - docker-compose -f monitoring/docker-compose.yml push
+    - echo "Deploying monitoring stack..."
+    - kubectl apply -f monitoring/k8s/
+  only:
+    - main

@@ -1,0 +1,42 @@
+{
+  "title": "Encrypted Chat Metrics",
+  "description": "Performance metrics for encrypted chat application",
+  "panels": [
+    {
+      "title": "Messages Overview",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(chat_messages_received_total[1m])",
+          "legendFormat": "Received",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(chat_messages_sent_total[1m])", 
+          "legendFormat": "Sent",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Active Connections",
+      "type": "gauge",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "chat_active_connections",
+          "legendFormat": "Connections",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  }
+}
