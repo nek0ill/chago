@@ -1,28 +1,46 @@
----
-
 image: golang:1.24.3
 
 stages:
-  - setup
-  - build  
+  - build
   - test
   - build-monitoring
   - deploy
 
 variables:
-  DOCKER_BUILDKIT: 1
   GOFLAGS: "-mod=vendor"
 
-# Dedicated setup stage for dependencies  
-setup:
-  stage: setup
-  script:
-    - apt-get update && apt-get install -y docker.io
-    - curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    - chmod +x /usr/local/bin/docker-compose
-
 before_script:
-  - go mod download  
+  - go mod download
+  - mkdir -p scripts
+  
+  # Create test_metrics.sh if not present
+  - |
+    if [ ! -f ./scripts/test_metrics.sh ]; then
+      cat > ./scripts/test_metrics.sh << 'EOF'
+      #!/bin/bash
+      set -eo pipefail
+      
+      if [ ! -f ./bin/chago ]; then
+        echo "Server binary not found - build first!"
+        exit 1
+      fi
+      
+      PORT=$((RANDOM % 1000 + 8000))
+      ./bin/chago server --port $PORT --metrics-port $((PORT+1)) --key test-key &
+      SERVER_PID=$!
+      sleep 2
+      
+      if ! curl --retry 5 --retry-delay 2 -s "http://localhost:$((PORT+1))/metrics" | grep -q "chat_"; then
+        kill $SERVER_PID
+        exit 1
+      fi
+      
+      kill $SERVER_PID
+      echo "Metrics test passed"
+      exit 0
+      EOF
+      chmod +x ./scripts/test_metrics.sh
+    fi
 
 build:
   stage: build
@@ -31,28 +49,29 @@ build:
   artifacts:
     paths:
       - bin/
+      - scripts/
 
 test:
-  stage: test  
+  stage: test
+  dependencies:
+    - build
   script:
+    - ./scripts/test_metrics.sh
     - go test -v ./...
-    - bash ./scripts/test_metrics.sh
 
 build-monitoring:
-  stage: build-monitoring  
+  stage: build-monitoring
   script:
     - docker-compose -f monitoring/docker-compose.yml config
-    - docker buildx build --build-arg BUILDKIT_INLINE_CACHE=1 -t $CI_REGISTRY_IMAGE .
-  cache:
-    key: monitoring-build
-    paths:
-      - monitoring/
+    - docker-compose -f monitoring/docker-compose.yml build
+  needs: ["test"]
 
-deploy:  
+deploy:
   stage: deploy
   script:
-    - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USER" --password-stdin
-    - docker push $CI_REGISTRY_IMAGE
+    - echo "$DOCKER_REGISTRY_PASSWORD" | docker login --username "$DOCKER_REGISTRY_USER" --password-stdin
+    - docker-compose -f monitoring/docker-compose.yml push
+    - echo "Deploying monitoring stack..."
     - kubectl apply -f monitoring/k8s/
   only:
     - main
