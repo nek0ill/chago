@@ -15,7 +15,7 @@ variables:
   
 before_script:
   - go mod download
-  - apt add --no-cache docker-compose
+  - apt install --no-cache docker-compose
 
 build:
   stage: build
