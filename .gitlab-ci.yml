@@ -1,6 +1,7 @@
 image: golang:1.24.3
 
 stages:
+  - prepare
   - build
   - test
   - build-monitoring
@@ -8,39 +9,36 @@ stages:
 
 variables:
   GOFLAGS: "-mod=vendor"
+  DOCKER_BUILDKIT: 1
 
-before_script:
-  - go mod download
-  - mkdir -p scripts
-  
-  # Create test_metrics.sh if not present
-  - |
-    if [ ! -f ./scripts/test_metrics.sh ]; then
-      cat > ./scripts/test_metrics.sh << 'EOF'
+prepare:
+  stage: prepare
+  script:
+    - mkdir -p scripts
+    - cat > ./scripts/test_metrics.sh << 'EOF'
       #!/bin/bash
       set -eo pipefail
       
-      if [ ! -f ./bin/chago ]; then
-        echo "Server binary not found - build first!"
-        exit 1
-      fi
+      [ -f ./bin/chago ] || { echo "Build binary first!"; exit 1; }
       
-      PORT=$((RANDOM % 1000 + 8000))
-      ./bin/chago server --port $PORT --metrics-port $((PORT+1)) --key test-key &
+      TEST_KEY="test-$(date +%s)"
+      PORT=$(( (RANDOM % 5000) + 8000 ))
+      METRICS_PORT=$((PORT + 1))
+      
+      ./bin/chago server --port $PORT --metrics-port $METRICS_PORT --key "$TEST_KEY" &
       SERVER_PID=$!
-      sleep 2
+      trap "kill $SERVER_PID" EXIT
+      sleep 3
       
-      if ! curl --retry 5 --retry-delay 2 -s "http://localhost:$((PORT+1))/metrics" | grep -q "chat_"; then
-        kill $SERVER_PID
-        exit 1
-      fi
+      curl --retry 3 --retry-delay 1 -s "http://localhost:$METRICS_PORT/metrics" | grep -q "chat_" || exit 1
       
-      kill $SERVER_PID
       echo "Metrics test passed"
       exit 0
       EOF
-      chmod +x ./scripts/test_metrics.sh
-    fi
+    - chmod +x ./scripts/test_metrics.sh
+  artifacts:
+    paths:
+      - scripts/
 
 build:
   stage: build
@@ -49,11 +47,11 @@ build:
   artifacts:
     paths:
       - bin/
-      - scripts/
 
 test:
   stage: test
   dependencies:
+    - prepare
     - build
   script:
     - ./scripts/test_metrics.sh
@@ -61,10 +59,10 @@ test:
 
 build-monitoring:
   stage: build-monitoring
+  needs: ["test"]
   script:
     - docker-compose -f monitoring/docker-compose.yml config
     - docker-compose -f monitoring/docker-compose.yml build
-  needs: ["test"]
 
 deploy:
   stage: deploy
@@ -72,6 +70,7 @@ deploy:
     - echo "$DOCKER_REGISTRY_PASSWORD" | docker login --username "$DOCKER_REGISTRY_USER" --password-stdin
     - docker-compose -f monitoring/docker-compose.yml push
     - echo "Deploying monitoring stack..."
+    # Add your actual deployment commands here
     - kubectl apply -f monitoring/k8s/
   only:
     - main

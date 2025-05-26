@@ -64,10 +64,11 @@ func (s *Server) handleConnection(conn net.Conn, key []byte) {
 		encryptKey: key,
 		decryptKey: key,
 	}
-s.clients[conn] = client
-s.connectTime[conn] = time.Now()
-s.msgCount[conn] = 0
-log.Printf("New connection from: %s", conn.RemoteAddr())
+	
+	s.clients[conn] = client
+	s.connectTime[conn] = time.Now()
+	s.msgCount[conn] = 0
+	log.Printf("New connection from: %s", conn.RemoteAddr())
 
 	if err := conn.SetReadDeadline(time.Now().Add(10 * time.Minute)); err != nil {
 		log.Printf("Failed to set read deadline: %v", err)
