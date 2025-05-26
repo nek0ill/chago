@@ -15,8 +15,9 @@ prepare:
   stage: prepare
   script:
     - mkdir -p scripts
-    - cat > ./scripts/test_metrics.sh << 'EOF'
-      #!/bin/bash
+    - |
+      cat > ./scripts/test_metrics.sh << 'EOF' \
+      #!/bin/bash \
       set -eo pipefail
       
       [ -f ./bin/chago ] || { echo "Build binary first!"; exit 1; }
