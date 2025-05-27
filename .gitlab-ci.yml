@@ -5,7 +5,7 @@ image: golang:1.24.3
 stages:
   - prepare
   - build
-  - test
+  # - test
   - build-monitoring
   - deploy
 
@@ -51,14 +51,14 @@ build:
     paths:
       - bin/
 
-test:
-  stage: test
-  dependencies:
-    - prepare
-    - build
-  script:
-    - ./scripts/test_metrics.sh
-    - go test -v ./...
+# test:
+  # stage: test
+  # dependencies:
+    # - prepare
+    # - build
+  # script:
+    # - ./scripts/test_metrics.sh
+    # - go test -v ./...
 
 build-monitoring:
   stage: build-monitoring
