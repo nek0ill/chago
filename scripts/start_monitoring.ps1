@@ -28,7 +28,7 @@ if ($portsInUse) {
 try {
     Write-Host "Starting monitoring stack..."
     docker-compose -f monitoring/docker-compose.yml up -d
-    
+
     Write-Host ""
     Write-Host "Monitoring services:"
     Write-Host "Grafana:   http://localhost:3000 (admin/admin)"

@@ -1,3 +1,5 @@
+---
+
 image: golang:1.24.3
 
 stages:
@@ -19,20 +21,20 @@ prepare:
       cat > ./scripts/test_metrics.sh << 'EOF' \
       #!/bin/bash \
       set -eo pipefail
-      
+
       [ -f ./bin/chago ] || { echo "Build binary first!"; exit 1; }
-      
+
       TEST_KEY="test-$(date +%s)"
       PORT=$(( (RANDOM % 5000) + 8000 ))
       METRICS_PORT=$((PORT + 1))
-      
+
       ./bin/chago server --port $PORT --metrics-port $METRICS_PORT --key "$TEST_KEY" &
       SERVER_PID=$!
       trap "kill $SERVER_PID" EXIT
       sleep 3
-      
+
       curl --retry 3 --retry-delay 1 -s "http://localhost:$METRICS_PORT/metrics" | grep -q "chat_" || exit 1
-      
+
       echo "Metrics test passed"
       exit 0
       EOF

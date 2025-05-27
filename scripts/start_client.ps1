@@ -19,7 +19,7 @@ Optional server address (default: localhost:8080)
 param(
     [Parameter(Mandatory=$true)]
     [string]$Key,
-    
+
     [string]$Server = "localhost:8080"
 )
 

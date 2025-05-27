@@ -48,7 +48,7 @@ try {
 try {
     Write-Host "Starting server on port $Port..."
     Start-Process -NoNewWindow -FilePath ".\chago.exe" -ArgumentList "server", "--port", $Port, "--key", $Key, "--metrics-port", 2112
-    
+
     # Verify metrics endpoint comes up
     $attempts = 0
     do {

@@ -69,7 +69,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	// Handle graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	
+
 	log.Println("Server started on port", serverPort)
 	go server.Start(key)
 
@@ -93,7 +93,7 @@ func runClient(cmd *cobra.Command, args []string) {
 			}
 
 			log.Printf("Connected to %s", serverAddr)
-			
+
 			// Start interactive session
 			for {
 				var msg string

@@ -64,7 +64,7 @@ func (s *Server) handleConnection(conn net.Conn, key []byte) {
 		encryptKey: key,
 		decryptKey: key,
 	}
-	
+
 	s.clients[conn] = client
 	s.connectTime[conn] = time.Now()
 	s.msgCount[conn] = 0
